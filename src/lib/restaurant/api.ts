@@ -1,4 +1,4 @@
-import { error } from "console";
+import { GooglePlacesSearchApiResponse } from "@/types";
 
 export async function fetchRamenRestaurant() {
   //外部のAPIを利用する
@@ -42,6 +42,13 @@ export async function fetchRamenRestaurant() {
     console.error(errorData);
     return { error: `NearbySearchリクエスト失敗：${response.status}` };
   }
-  const data = await response.json();
+  const data: GooglePlacesSearchApiResponse = await response.json();
   console.log(data);
+
+  if(!data.places){
+    return{data:[]}
+  }
+
+  const nearbyRamenPlaces = data.places;
+  transformPlaceResults(nearbyRamenPlaces);
 }
