@@ -43,5 +43,5 @@ export async function fetchRamenRestaurant() {
     return { error: `NearbySearchリクエスト失敗：${response.status}` };
   }
   const data = await response.json();
-  // console.log(data);
+  console.log(data);
 }
