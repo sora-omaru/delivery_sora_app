@@ -37,11 +37,13 @@ export async function fetchRamenRestaurant() {
     next: { revalidate: 86400 }, //キャッシュからデータを取得するように設定する（24時間で更新する）
   });
 
+  //ここでresponseのデータがない場合の例外処理を記入
   if (!response.ok) {
     const errorData = await response.json();
     console.error(errorData);
     return { error: `NearbySearchリクエスト失敗：${response.status}` };
   }
+  //dataに型を与える
   const data: GooglePlacesSearchApiResponse = await response.json();
   console.log(data);
 
