@@ -1,4 +1,5 @@
 import { GooglePlacesSearchApiResponse } from "@/types";
+import { transformPlaceResults } from "./utils";
 
 export async function fetchRamenRestaurant() {
   //外部のAPIを利用する
@@ -45,10 +46,19 @@ export async function fetchRamenRestaurant() {
   const data: GooglePlacesSearchApiResponse = await response.json();
   console.log(data);
 
-  if(!data.places){
-    return{data:[]}
+  if (!data.places) {
+    return { data: [] };
   }
 
   const nearbyRamenPlaces = data.places;
-  transformPlaceResults(nearbyRamenPlaces);
+  const RamenRestaurants = await transformPlaceResults(nearbyRamenPlaces);
+  console.log(RamenRestaurants);
+}
+
+export async function getPhotoUrl(name: string, maxWidth = 400) {
+  "use cache";
+  const apiKey = process.env.Google_API_key;
+
+  const url = `https://places.googleapis.com/v1/${name}/media?key=${apiKey}&maxWidthPx=${maxWidth}`;
+  return url;
 }
