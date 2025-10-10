@@ -28,7 +28,7 @@ export async function fetchRestaurant(): Promise<ApiResult<TransformResult>> {
   ];
 
   const requestBody = {
-    includedTypes: [desiredTypes],
+    includedTypes: desiredTypes,
     maxResultCount: 10,
     locationRestriction: {
       circle: {
@@ -71,7 +71,9 @@ export async function fetchRestaurant(): Promise<ApiResult<TransformResult>> {
     } catch {
       // no-op
     }
-    throw new Error(`response data Request failed`);
+    throw new Error(
+      `response data Request failed :${response.status} ${response.statusText}`
+    );
   }
 
   const data: GooglePlacesSearchApiResponse = await response.json();
@@ -145,7 +147,9 @@ export async function fetchRamenRestaurant(): Promise<
     } catch {
       // no-op
     }
-    throw new Error(`NearbySearch Request failed:${response.status}`);
+    throw new Error(
+      `NearbySearch Request failed:${response.status} ${response.statusText}`
+    );
   }
 
   const data: GooglePlacesSearchApiResponse = await response.json();
