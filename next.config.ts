@@ -5,9 +5,17 @@ const nextConfig: NextConfig = {
   logging: {
     fetches: { fullUrl: true },
   },
-  experimental:{
-    useCache:true
-  }
+  experimental: {
+    useCache: true,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "places.googleapis.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

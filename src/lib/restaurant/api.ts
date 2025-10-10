@@ -1,19 +1,25 @@
 import { GooglePlacesSearchApiResponse } from "@/types";
 import { transformPlaceResults } from "./utils";
 
-export async function fetchRamenRestaurant() {
-  //外部のAPIを利用する
+// 返り値を統一
+type ApiResult<T> = { data: T; error: null } | { data: null; error: string };
+
+type TransformResult = Awaited<ReturnType<typeof transformPlaceResults>>;
+
+// 近くのラーメン店を取得（ApiResult<T> で返す）
+export async function fetchRamenRestaurant(): Promise<
+  ApiResult<TransformResult>
+> {
   const url = "https://places.googleapis.com/v1/places:searchNearby";
-  //こちらは半径500ｍ以内のものを取得するということ。
-  //日本語のものを取得する
+
   const requestBody = {
     includedPrimaryTypes: ["ramen_restaurant"],
     maxResultCount: 10,
     locationRestriction: {
       circle: {
         center: {
-          latitude: 35.6701286, //表参道～原宿
-          longitude: 139.7030912, //表参道～原宿
+          latitude: 35.6701286, // 表参道～原宿
+          longitude: 139.7030912, // 表参道～原宿
         },
         radius: 500.0,
       },
@@ -22,43 +28,60 @@ export async function fetchRamenRestaurant() {
     rankPreference: "DISTANCE",
   };
 
-  const apiKey = process.env.Google_API_key;
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    return {
+      data: null,
+      error: "APIキーが設定されていません（GOOGLE_API_KEY）",
+    };
+  }
+
   const header = {
     "Content-Type": "application/json",
-    "X-Goog-Api-Key": apiKey!,
+    "X-Goog-Api-Key": apiKey,
+    // transformPlaceResults で使う可能性のあるフィールドを明示
     "X-Goog-FieldMask":
-      "places.id,places.displayName,places.primaryType,places.photos",
+      "places.id,places.displayName,places.primaryType,places.types,places.photos.name",
   };
 
   const response = await fetch(url, {
     method: "POST",
-    //上記のbodyをこちらに乗せて向こうのＤＢから取得する。
     body: JSON.stringify(requestBody),
     headers: header,
-    next: { revalidate: 86400 }, //キャッシュからデータを取得するように設定する（24時間で更新する）
+    next: { revalidate: 86400 }, // 24時間でキャッシュ更新
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    console.error(errorData);
-    return { error: `NearbySearchリクエスト失敗：${response.status}` };
+    // 失敗系は data:null / error:string
+    try {
+      const errorData = await response.json();
+      console.error(errorData);
+    } catch {
+      // no-op
+    }
+    return {
+      data: null,
+      error: `NearbySearchリクエスト失敗：${response.status}`,
+    };
   }
-  const data: GooglePlacesSearchApiResponse = await response.json();
-  console.log(data);
 
+  const data: GooglePlacesSearchApiResponse = await response.json();
+
+  // places が無い場合は空配列（成功扱い）
   if (!data.places) {
-    return { data: [] };
+    return { data: [], error: null };
   }
 
   const nearbyRamenPlaces = data.places;
-  const RamenRestaurants = await transformPlaceResults(nearbyRamenPlaces);
-  console.log(RamenRestaurants);
+  const ramenRestaurants = await transformPlaceResults(nearbyRamenPlaces);
+  console.log(data);
+
+  // 最後に必ず return
+  return { data: ramenRestaurants, error: null };
 }
 
 export async function getPhotoUrl(name: string, maxWidth = 400) {
   "use cache";
-  const apiKey = process.env.Google_API_key;
-
-  const url = `https://places.googleapis.com/v1/${name}/media?key=${apiKey}&maxWidthPx=${maxWidth}`;
-  return url;
+  const apiKey = process.env.GOOGLE_API_KEY;
+  return `https://places.googleapis.com/v1/${name}/media?key=${apiKey}&maxWidthPx=${maxWidth}`;
 }

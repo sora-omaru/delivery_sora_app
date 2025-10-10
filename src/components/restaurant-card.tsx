@@ -1,16 +1,21 @@
+import { Restaurant } from "@/types";
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-export default function RestaurantCard() {
+interface RestaurantCardProps {
+  restaurant: Restaurant;
+}
+
+export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
   return (
     <div className="relative">
       <Link href="/abn" className="inset-0 absolute z-10"></Link>
       <div className="relative aspect-video rounded-lg overflow-hidden">
         <Image
           className="object-cover"
-          src={"/no_image.png"}
+          src={restaurant.photoUrl}
           fill
           alt="レストラン画像"
           sizes="(max-width:1280px ) 25%,280px"
@@ -19,7 +24,7 @@ export default function RestaurantCard() {
         />
       </div>
       <div className="flex justify-between items-center">
-        <p className="bold">name</p>
+        <p className="bold">{restaurant.restaurantName}</p>
 
         <div className="z-20">
           <Heart className="hover:fill-red-500 hover:stroke-0" />
