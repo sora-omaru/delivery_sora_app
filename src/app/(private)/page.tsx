@@ -1,4 +1,5 @@
 import CarouselContainer from "@/components/carousel-container";
+import Categories from "@/components/categories";
 import RestaurantCard from "@/components/restaurant-card";
 import RestaurantList from "@/components/restaurant-list";
 import Section from "@/components/section";
@@ -11,11 +12,15 @@ export default async function Home() {
     await fetchRestaurant();
   return (
     <>
+      <Categories />
       {/*レストラン情報*/}
       {!nearRestaurant ? (
         <p>{nearByRestaurantError}</p>
       ) : nearRestaurant.length > 0 ? (
-        <Section title="近くのレストラン" expandedContent = {<RestaurantList restaurants={nearRestaurant}/>}>
+        <Section
+          title="近くのレストラン"
+          expandedContent={<RestaurantList restaurants={nearRestaurant} />}
+        >
           <CarouselContainer slideToShow={4}>
             {nearRestaurant.map((restaurant, index) => (
               <RestaurantCard key={index} restaurant={restaurant} />
@@ -31,7 +36,12 @@ export default async function Home() {
       {!nearByRamenRestaurant ? (
         <p>{nearByRamenRestaurantError}</p>
       ) : nearByRamenRestaurant.length > 0 ? (
-        <Section title="近くのラーメン屋" expandedContent = {<RestaurantList restaurants={nearByRamenRestaurant} />}>
+        <Section
+          title="近くのラーメン屋"
+          expandedContent={
+            <RestaurantList restaurants={nearByRamenRestaurant} />
+          }
+        >
           <CarouselContainer slideToShow={4}>
             {nearByRamenRestaurant.map((restaurant, index) => (
               <RestaurantCard key={index} restaurant={restaurant} />
