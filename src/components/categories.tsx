@@ -1,9 +1,19 @@
+"use client";
+
 import React from "react";
 import CarouselContainer from "./carousel-container";
 import Category from "./category";
+import { useRouter, useSearchParams } from "next/navigation";
+
+export interface CategoryType {
+  categoryName: string;
+  type: string;
+  imageUrl: string;
+}
 
 export default function Categories() {
-  const categories = [
+  //ここで今回絞るカテゴリーを定義する
+  const categories: CategoryType[] = [
     {
       categoryName: "ファーストフード",
       type: "fast_food_restaurant",
@@ -65,10 +75,34 @@ export default function Categories() {
     },
   ];
 
+  ///search?category=fast_food_restaurantみたいなことをするための処理
+  const searchParams = useSearchParams();
+  const route = useRouter();
+  //URLの中からcategoryを取り出す(この後にHomeに戻るように使う)
+  const currentCategory = searchParams.get("category");
+
+  //カテゴリーを絞って検索する処理
+  const searchRestaurantsOfCategory = (category: string) => {
+    const params = new URLSearchParams(searchParams);
+
+    //現在指定しているカテゴリーと同じものを選んだ場合、Homeへ戻るようにする
+    if (currentCategory === category) {
+      route.replace("/");
+    } else {
+      params.set("category", category);
+      route.replace(`/search?${params.toString()}`);
+    }
+  };
+
   return (
     <CarouselContainer slideToShow={10}>
       {categories.map((category) => (
-        <Category key={category.type} />
+        <Category
+          key={category.type}
+          category={category}
+          onClick={searchRestaurantsOfCategory}
+          select ={category.type === currentCategory}
+        />
       ))}
     </CarouselContainer>
   );

@@ -97,7 +97,79 @@ export async function fetchRestaurant(): Promise<ApiResult<TransformResult>> {
   // 最後に必ず return
   return { data: Restaurants, error: null };
 }
-export async function fetchRamenRestaurant(): Promise<
+
+//カテゴリー検索機能
+export async function fetchCategoryRestaurants(
+  category: string
+): Promise<ApiResult<TransformResult>> {
+  const url = "https://places.googleapis.com/v1/places:searchNearby";
+
+  const requestBody = {
+    includedPrimaryTypes: [category],
+    maxResultCount: 10,
+    locationRestriction: {
+      circle: {
+        center: {
+          latitude: 35.6701286, // 表参道～原宿
+          longitude: 139.7030912, // 表参道～原宿
+        },
+        radius: 500.0,
+      },
+    },
+    languageCode: "ja",
+    rankPreference: "DISTANCE",
+  };
+
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    //Nextのエラー機能
+    throw new Error(`Missing environment variable:GOOGLE_API_KEY`);
+  }
+
+  const header = {
+    "Content-Type": "application/json",
+    "X-Goog-Api-Key": apiKey,
+    // transformPlaceResults で使う可能性のあるフィールドを明示
+    "X-Goog-FieldMask":
+      "places.id,places.displayName,places.primaryType,places.types,places.photos.name",
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+    headers: header,
+    next: { revalidate: 86400 }, // 24時間でキャッシュ更新
+  });
+
+  if (!response.ok) {
+    // 失敗系は data:null / error:string
+    try {
+      const errorData = await response.json();
+      console.error(errorData);
+    } catch {
+      // no-op
+    }
+    throw new Error(
+      `NearbySearch Request failed:${response.status} ${response.statusText}`
+    );
+  }
+
+  const data: GooglePlacesSearchApiResponse = await response.json();
+
+  // places が無い場合は空配列（成功扱い）
+  if (!data.places) {
+    return { data: [], error: null };
+  }
+
+  const nearbyCategoryPlaces = data.places;
+  const categoryRestaurants = await transformPlaceResults(nearbyCategoryPlaces);
+  console.log(data);
+
+  // 最後に必ず return
+  return { data: categoryRestaurants, error: null };
+}
+//ラーメンの情情報を取得する
+export async function fetchRamenRestaurants(): Promise<
   ApiResult<TransformResult>
 > {
   const url = "https://places.googleapis.com/v1/places:searchNearby";

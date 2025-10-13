@@ -3,11 +3,11 @@ import Categories from "@/components/categories";
 import RestaurantCard from "@/components/restaurant-card";
 import RestaurantList from "@/components/restaurant-list";
 import Section from "@/components/section";
-import { fetchRamenRestaurant, fetchRestaurant } from "@/lib/restaurant/api";
+import {fetchRamenRestaurants, fetchRestaurant } from "@/lib/restaurant/api";
 
 export default async function Home() {
   const { data: nearByRamenRestaurant, error: nearByRamenRestaurantError } =
-    await fetchRamenRestaurant();
+    await fetchRamenRestaurants();
   const { data: nearRestaurant, error: nearByRestaurantError } =
     await fetchRestaurant();
   return (
