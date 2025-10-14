@@ -1,6 +1,7 @@
 import Link from "next/link";
 import React from "react";
 import MenuSheet from "./menu";
+import PlaceSearchBar from "./placeSearchBar";
 
 function Header() {
   return (
@@ -12,7 +13,9 @@ function Header() {
           <Link href="/">Delivery APP</Link>
         </div>
         <div>住所を選択</div>
-        <div className="flex-1">検索バー</div>
+        <div className="flex-1">
+        <PlaceSearchBar />
+        </div>
         <div>カート</div>
       </div>
     </header>
