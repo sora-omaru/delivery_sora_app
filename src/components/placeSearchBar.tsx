@@ -1,5 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDebouncedCallback } from 'use-debounce';
+
 import {
   Command,
   CommandEmpty,
@@ -12,8 +14,31 @@ export default function PlaceSearchBar() {
   const [open, setOpen] = useState(false);
   const [inputText, setInputText] = useState("");
 
+  const fetchSuggestions = async () => {
+    try {
+      const response = await fetch(`/api/restaurant?input=${inputText}`); //APIを取得する
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (!inputText.trim()) {
+      ("");
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    fetchSuggestions();
+  }, [inputText]);
+
   const handleBlur = () => {
     setOpen(false);
+  };
+  const handleFocus = () => {
+    if (inputText) {
+      setOpen(true);
+    }
   };
 
   return (
@@ -21,17 +46,13 @@ export default function PlaceSearchBar() {
       <CommandInput
         placeholder="Type a command or search..."
         value={inputText}
-        onValueChange={(inputText) => {
-          if (!open) {
-            setOpen(true);
-          }
-          setInputText(inputText);
-        }}
+        onValueChange={setInputText}
         onBlur={handleBlur}
+        onFocus={handleFocus}
       />
       {open && (
         <div className="relative">
-          <CommandList className="absolute bg-background w-full">
+          <CommandList className="absolute bg-background w-full shadow-md">
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandItem>Calendar</CommandItem>
             <CommandItem>Search Emoji</CommandItem>
