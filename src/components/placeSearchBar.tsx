@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useDebouncedCallback } from 'use-debounce';
+import { useDebouncedCallback } from "use-debounce";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   Command,
@@ -13,14 +14,19 @@ import {
 export default function PlaceSearchBar() {
   const [open, setOpen] = useState(false);
   const [inputText, setInputText] = useState("");
+  const [sessionToken, setSessionToken] = useState(uuidv4());
 
-  const fetchSuggestions = async () => {
+  //useDebounceを実装し、入力から0.5秒後にAPIを呼ぶようにしている。
+  const fetchSuggestions = useDebouncedCallback(async (input: string) => {
+    console.log("input", input);
     try {
-      const response = await fetch(`/api/restaurant?input=${inputText}`); //APIを取得する
+      const response = await fetch(
+        `/api/restaurant/autocomplete?input=${input}&sessionToken=${sessionToken}`
+      ); //APIを取得する
     } catch (error) {
       console.error(error);
     }
-  };
+  }, 500);
 
   useEffect(() => {
     if (!inputText.trim()) {
@@ -29,7 +35,7 @@ export default function PlaceSearchBar() {
       return;
     }
     setOpen(true);
-    fetchSuggestions();
+    fetchSuggestions(inputText);
   }, [inputText]);
 
   const handleBlur = () => {

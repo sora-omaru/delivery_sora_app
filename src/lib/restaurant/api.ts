@@ -174,6 +174,20 @@ export async function fetchRamenRestaurants(): Promise<
 > {
   const url = "https://places.googleapis.com/v1/places:searchNearby";
 
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    //Nextのエラー機能
+    throw new Error(`Missing environment variable:GOOGLE_API_KEY`);
+  }
+
+  const header = {
+    "Content-Type": "application/json",
+    "X-Goog-Api-Key": apiKey,
+    // transformPlaceResults で使う可能性のあるフィールドを明示
+    "X-Goog-FieldMask":
+      "places.id,places.displayName,places.primaryType,places.types,places.photos.name",
+  };
+
   const requestBody = {
     includedPrimaryTypes: ["ramen_restaurant"],
     maxResultCount: 10,
@@ -188,20 +202,6 @@ export async function fetchRamenRestaurants(): Promise<
     },
     languageCode: "ja",
     rankPreference: "DISTANCE",
-  };
-
-  const apiKey = process.env.GOOGLE_API_KEY;
-  if (!apiKey) {
-    //Nextのエラー機能
-    throw new Error(`Missing environment variable:GOOGLE_API_KEY`);
-  }
-
-  const header = {
-    "Content-Type": "application/json",
-    "X-Goog-Api-Key": apiKey,
-    // transformPlaceResults で使う可能性のあるフィールドを明示
-    "X-Goog-FieldMask":
-      "places.id,places.displayName,places.primaryType,places.types,places.photos.name",
   };
 
   const response = await fetch(url, {
