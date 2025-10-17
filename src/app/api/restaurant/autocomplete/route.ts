@@ -1,4 +1,4 @@
-import { error } from "console";
+import { GoogleAutocompleteApiResponse, RestaurantSuggestion } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -36,9 +36,13 @@ export async function GET(request: NextRequest) {
     };
 
     const requestBody = {
-      includedPrimaryTypes: ["ramen_restaurant"],
-      maxResultCount: 10,
-      locationRestriction: {
+      includeQueryPredictions: true,
+      //サジェスチョン（ユーザーが入力している）
+      //↑検索欄にユーザーが入力している途中の文字をもとに「候補を予測してくれる」もの
+      input: input,
+      sessionToken: sessionToken,
+      includedPrimaryTypes: ["restaurant"],
+      locationBias: {
         circle: {
           center: {
             latitude: 35.6701286, // 表参道～原宿
@@ -48,14 +52,16 @@ export async function GET(request: NextRequest) {
         },
       },
       languageCode: "ja",
-      rankPreference: "DISTANCE",
+      // includedRegionCodes: ["jp"],
+      regionCode: "jp",
+      //こちらを使わないと  includeQueryPredictions: true,が適応しない。
+      //厳密に日本のものを表示するわけではないが似たようなものだから適応する。
     };
 
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify(requestBody),
       headers: header,
-      next: { revalidate: 86400 }, // 24時間でキャッシュ更新
     });
 
     if (!response.ok) {
@@ -67,13 +73,44 @@ export async function GET(request: NextRequest) {
         // no-op
       }
       throw new Error(
-        `NearbySearch Request failed:${response.status} ${response.statusText}`
+        `AutoComplete Search Request failed:${response.status} ${response.statusText}`
       );
     }
+    const data: GoogleAutocompleteApiResponse = await response.json();
+    console.log("data", JSON.stringify(data, null, 2));
+    //undefinedもふくまれるためから配列を返すようにする
+    //これを行うことで、suggestionsの中身を使えるようになる
+    const suggestions = data.suggestions ?? [];
+
+    //型に沿って使いやすい形に成型していく
+    const results = suggestions
+      .map((suggestion) => {
+        if (suggestion.placePrediction && suggestion.placePrediction.placeId) {
+          return {
+            type: "placePrediction",
+            placeId: suggestion.placePrediction.placeId,
+            placeName:
+              suggestion.placePrediction.structuredFormat?.mainText?.text,
+          };
+        } else if (
+          suggestion.queryPrediction &&
+          suggestion.queryPrediction.text?.text
+        ) {
+          return {
+            type: "queryPrediction",
+            placeName: suggestion.queryPrediction.text?.text,
+          };
+        }
+      })
+      //ここでfilterを行うことで、undefined出ない場合上記の処理を行うとなるため、型からundefinedがなくなる
+      .filter(
+        (suggestion): suggestion is RestaurantSuggestion =>
+          suggestion !== undefined
+      );
+
+    return NextResponse.json(results);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "予期せぬエラーが発生しました" });
   }
-
-  return NextResponse.json("success");
 }
